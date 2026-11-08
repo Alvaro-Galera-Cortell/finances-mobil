@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="ca-ES-valencia">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16181d" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Finances">
+<meta name="description" content="Els meus diners: estalvi i despesa per categories.">
+<title>Finances</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f6f4ef; --card:#ffffff; --soft:#efece5; --line:rgba(30,25,20,.12);
+  --text:#1d1b18; --muted:#5e5850; --accent:#2f5bd3; --accent-text:#fff;
+  --ok:#17794a; --bad:#b42318; --warn:#9a5b00; --save:#6a3fc4;
+  --r:18px; --gap:14px;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16181d; --card:#20232a; --soft:#2a2e36; --line:rgba(255,255,255,.12);
+    --text:#f2f1ee; --muted:#b4b0a8; --accent:#7c9cff; --accent-text:#0d1020;
+    --ok:#5fd396; --bad:#ff8a80; --warn:#f2b45a; --save:#b89bff;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;font-size:106.25%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4;
+  padding-top:var(--safe-t);padding-bottom:calc(84px + var(--safe-b))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:1.35rem;margin:6px 0 14px}
+h2{font-size:1.05rem;margin:22px 0 10px}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stack>*+*{margin-top:var(--gap)}
+
+/* Total */
+.total{text-align:center;padding:22px 16px}
+.total .lbl{font-size:.95rem;color:var(--muted)}
+.total .big{font-size:2.6rem;font-weight:750;letter-spacing:-.02em;margin:4px 0 2px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.split .card{padding:12px 14px;text-align:left}
+.split .v{font-size:1.25rem;font-weight:700}
+.split .save .v{color:var(--save)}
+
+/* Categories */
+.cat{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center}
+.cat .em{font-size:1.6rem;width:2.2rem;text-align:center}
+.cat .nm{font-weight:650}
+.cat .sub{grid-column:2/4;font-size:.88rem;color:var(--muted)}
+.cat .v{font-weight:700;font-size:1.15rem;text-align:right}
+.cat.neg .v{color:var(--bad)}
+.bar{grid-column:1/4;height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;background:var(--ok);border-radius:99px}
+.cat.neg .bar>i{background:var(--bad)}
+.cat.low .bar>i{background:var(--warn)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;
+  padding:0 18px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:600}
+.btn.pri{background:var(--accent);color:var(--accent-text);border-color:transparent}
+.btn.danger{color:var(--bad)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.btn{flex:1 1 0}
+
+/* Forms */
+label.f{display:block;font-weight:600;margin-bottom:6px}
+.in{width:100%;min-height:52px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);font-size:1.05rem}
+.in.amt{font-size:1.8rem;font-weight:700;text-align:center}
+.hint{font-size:.88rem;color:var(--muted);margin-top:6px}
+.err{color:var(--bad);font-weight:600;font-size:.92rem;margin-top:6px}
+fieldset{border:0;padding:0;margin:0}
+legend{font-weight:600;margin-bottom:8px;padding:0}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 12px;border-radius:14px;
+  border:1px solid var(--line);background:var(--card);font-weight:600}
+.chips input:checked+label{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))}
+.chips input:focus-visible+label{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--soft);padding:4px;border-radius:16px}
+.seg button{min-height:44px;border:0;border-radius:12px;background:transparent;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.15);outline:2px solid var(--accent);outline-offset:-2px;color:var(--accent)}
+.prev{font-size:.9rem;background:var(--soft);border-radius:12px;padding:10px 12px}
+.prev div{display:flex;justify-content:space-between}
+
+/* Movements */
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mhead .btn{min-width:48px;padding:0}
+.mhead h2{margin:0;text-transform:capitalize}
+.day{font-size:.85rem;color:var(--muted);margin:16px 4px 6px;text-transform:capitalize}
+.mv{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;width:100%;
+  min-height:60px;padding:10px 14px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.mv+.mv{margin-top:6px}
+.mv .em{font-size:1.4rem;grid-row:1/3}
+.mv .t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mv .s{font-size:.85rem;color:var(--muted)}
+.mv .a{grid-row:1/3;font-weight:700}
+.mv .a.out{color:var(--text)} .mv .a.in{color:var(--ok)} .mv .a.mv2{color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:28px 10px}
+
+/* Summary */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpis .card{padding:12px 14px}
+.kpis .v{font-size:1.2rem;font-weight:700}
+.hb{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.hb+.hb{margin-top:12px}
+.hb .bar{grid-column:1/3;margin-top:0}
+.hb .bar>i{background:var(--accent)}
+
+/* Settings */
+.pctrow{display:grid;grid-template-columns:2.2rem 1fr 6.5rem;gap:10px;align-items:center}
+.pctrow+.pctrow{margin-top:10px}
+.pctrow .em{font-size:1.4rem;text-align:center}
+.pctrow .in{min-height:48px}
+.pctin{display:flex;align-items:center;gap:6px}
+.pctin .in{text-align:right}
+.sum{display:flex;justify-content:space-between;font-weight:700;margin-top:12px}
+.sum.bad{color:var(--bad)}
+
+/* Tab bar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--card);border-top:1px solid var(--line);
+  padding:6px 8px calc(6px + var(--safe-b));display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+nav.tabs button{min-height:56px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;font-size:.78rem;font-weight:600;color:var(--muted);border-radius:12px}
+nav.tabs button .ic{font-size:1.35rem;line-height:1}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+nav.tabs .add{justify-self:center;width:62px;height:62px;min-height:62px;border-radius:50%;background:var(--accent);
+  color:var(--accent-text);font-size:2rem;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);margin-top:-22px}
+
+/* Sheet */
+dialog{border:0;padding:0;margin:auto auto 0;width:100%;max-width:560px;max-height:92vh;
+  border-radius:24px 24px 0 0;background:var(--bg);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog .wrap{padding-bottom:calc(20px + var(--safe-b))}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sheet-h h2{margin:0;font-size:1.2rem}
+.x{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:1.4rem}
+
+/* Welcome */
+.welcome h1{font-size:1.7rem;margin-top:18px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--safe-b));z-index:20;
+  background:var(--text);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;max-width:90vw}
+footer{text-align:center;font-size:.8rem;color:var(--muted);margin-top:24px}
+@media (prefers-reduced-motion: no-preference){
+  dialog[open]{animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<nav class="tabs" id="tabs" aria-label="Seccions" hidden>
+  <button type="button" data-v="inici"><span class="ic" aria-hidden="true">🏠</span>Inici</button>
+  <button type="button" data-v="moviments"><span class="ic" aria-hidden="true">📋</span>Moviments</button>
+  <button type="button" class="add" id="addBtn" aria-label="Afegir moviment">+</button>
+  <button type="button" data-v="resum"><span class="ic" aria-hidden="true">📊</span>Resum</button>
+  <button type="button" data-v="ajustos"><span class="ic" aria-hidden="true">⚙️</span>Ajustos</button>
+</nav>
+
+<dialog id="sheet" aria-labelledby="sheetTitle"><div class="wrap" id="sheetBody"></div></dialog>
+
+<script>
+"use strict";
+const APP_VERSION = "1.0.0";
+const KEY = "finances_v1";
+const CATS_DEF = [
+  { id: "capritxos", nom: "Capritxos", em: "🛍️", pct: 30 },
+  { id: "soparfora", nom: "Sopar fora", em: "🍽️", pct: 30 },
+  { id: "oci", nom: "Oci", em: "🎉", pct: 20 },
+  { id: "emergencia", nom: "Emergència", em: "🚨", pct: 15 },
+  { id: "fixos", nom: "Fixos", em: "📌", pct: 5 },
+];
+const ESTALVI = { id: "estalvi", nom: "Estalvi", em: "🐷" };
+
+let S = load();
+let vista = "inici";
+let mesOff = 0;
+
+function nouEstat() {
+  return { v: 1, cats: CATS_DEF.map(c => ({ ...c })), movs: [], estalviPct: 20, banc: null };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && Array.isArray(s.movs) && Array.isArray(s.cats)) return Object.assign(nouEstat(), s);
+    }
+  } catch (e) {}
+  return nouEstat();
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { avisa("No s'ha pogut guardar. Fes una còpia des d'Ajustos."); }
+}
+
+/* ---------- utilitats ---------- */
+const fmt = new Intl.NumberFormat("ca-ES", { style: "currency", currency: "EUR" });
+const eur = n => fmt.format(Math.round((n || 0) * 100) / 100 + 0);
+const r2 = n => Math.round(n * 100) / 100;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function avui() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function parseEur(s) {
+  const t = String(s || "").trim().replace(/\s|€/g, "").replace(",", ".");
+  if (!/^\d+(\.\d{0,2})?$/.test(t)) return NaN;
+  return r2(Number(t));
+}
+function mesDe(ymd) { return ymd.slice(0, 7); }
+function mesActual(off) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + off); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+function nomMes(mk) { const [y, m] = mk.split("-").map(Number); return new Date(y, m - 1, 1).toLocaleDateString("ca-ES", { month: "long", year: "numeric" }); }
+function nomDia(ymd) { const [y, m, d] = ymd.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("ca-ES", { weekday: "long", day: "numeric", month: "long" }); }
+function compte(id) { return id === "estalvi" ? ESTALVI : (S.cats.find(c => c.id === id) || { id, nom: id, em: "❓" }); }
+function avisa(t) {
+  document.getElementById("live").textContent = t;
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); el.textContent = t;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 2600);
+}
+
+/* ---------- càlculs ---------- */
+// L'ingrés es reparteix en el moment: el que va a cada categoria queda guardat al moviment,
+// així canviar els percentatges després no reescriu el passat.
+function repartir(total) {
+  const rep = {}; let usat = 0;
+  S.cats.forEach(c => { rep[c.id] = r2(total * c.pct / 100); usat = r2(usat + rep[c.id]); });
+  const resta = r2(total - usat);
+  if (resta && S.cats.length) { const gran = [...S.cats].sort((a, b) => b.pct - a.pct)[0]; rep[gran.id] = r2(rep[gran.id] + resta); }
+  return rep;
+}
+function saldos() {
+  const s = { estalvi: 0 }; S.cats.forEach(c => s[c.id] = 0);
+  for (const m of S.movs) {
+    if (m.tipus === "ingres") {
+      s.estalvi = r2(s.estalvi + (m.estalvi || 0));
+      for (const k in m.rep) s[k] = r2((s[k] || 0) + m.rep[k]);
+    } else if (m.tipus === "despesa") {
+      s[m.cat] = r2((s[m.cat] || 0) - m.imp);
+    } else if (m.tipus === "traspas") {
+      s[m.de] = r2((s[m.de] || 0) - m.imp); s[m.a] = r2((s[m.a] || 0) + m.imp);
+    }
+  }
+  return s;
+}
+function gastatMes(mk) {
+  const g = {}; let tot = 0;
+  for (const m of S.movs) if (m.tipus === "despesa" && mesDe(m.data) === mk) { g[m.cat] = r2((g[m.cat] || 0) + m.imp); tot = r2(tot + m.imp); }
+  return { g, tot };
+}
+function sumaPct() { return S.cats.reduce((a, c) => a + Number(c.pct || 0), 0); }
+
+/* ---------- vistes ---------- */
+function render() {
+  const app = document.getElementById("app");
+  const tabs = document.getElementById("tabs");
+  if (!S.movs.length) { tabs.hidden = true; app.innerHTML = vBenvinguda(); lligaBenvinguda(); return; }
+  tabs.hidden = false;
+  tabs.querySelectorAll("[data-v]").forEach(b => { if (b.dataset.v === vista) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  const html = { inici: vInici, moviments: vMoviments, resum: vResum, ajustos: vAjustos }[vista]();
+  app.innerHTML = `<main class="wrap" id="main">${html}<footer>Finances · v${APP_VERSION} · les dades només estan en aquest mòbil</footer></main>`;
+  ({ inici: lligaInici, moviments: lligaMoviments, resum: lligaResum, ajustos: lligaAjustos })[vista]();
+}
+
+function vBenvinguda() {
+  return `<main class="wrap welcome" id="main">
+    <h1>Hola! 👋</h1>
+    <p>Comencem. Digues quants diners tens ara mateix i quant en vols apartar a l'estalvi. La resta es repartirà entre les teues categories.</p>
+    <form id="fIni" class="stack card" novalidate>
+      <div><label class="f" for="iniTot">Quants diners tens ara?</label>
+        <input class="in amt num" id="iniTot" inputmode="decimal" autocomplete="off" placeholder="0,00 €" aria-describedby="iniTotErr"><div class="err" id="iniTotErr" role="alert"></div></div>
+      <div><label class="f" for="iniEst">D'això, quant és estalvi?</label>
+        <input class="in num" id="iniEst" inputmode="decimal" autocomplete="off" placeholder="0,00 €" aria-describedby="iniEstHint iniEstErr">
+        <div class="hint" id="iniEstHint">Els diners que no vols tocar. Pots deixar-ho en 0.</div><div class="err" id="iniEstErr" role="alert"></div></div>
+      <div class="prev" id="iniPrev" aria-live="polite"></div>
+      <button class="btn pri block" type="submit">Començar</button>
+    </form>
+    <p class="hint">Les dades es guarden només en aquest mòbil. Des d'Ajustos pots fer-ne una còpia.</p>
+  </main>`;
+}
+function lligaBenvinguda() {
+  const tot = document.getElementById("iniTot"), est = document.getElementById("iniEst"), prev = document.getElementById("iniPrev");
+  const pinta = () => {
+    const t = parseEur(tot.value), e = est.value.trim() ? parseEur(est.value) : 0;
+    if (!(t > 0) || !(e >= 0) || e > t) { prev.innerHTML = `<span class="muted">Ací veuràs com es reparteix.</span>`; return; }
+    prev.innerHTML = previewRep(t - e, e);
+  };
+  tot.addEventListener("input", pinta); est.addEventListener("input", pinta); pinta();
+  tot.focus();
+  document.getElementById("fIni").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const t = parseEur(tot.value), e = est.value.trim() ? parseEur(est.value) : 0;
+    document.getElementById("iniTotErr").textContent = t > 0 ? "" : "Escriu una quantitat, per exemple 450 o 450,50.";
+    document.getElementById("iniEstErr").textContent = (e >= 0 && (!(t > 0) || e <= t)) ? "" : "L'estalvi no pot ser més que el total.";
+    if (!(t > 0) || !(e >= 0) || e > t) return;
+    S.movs.push({ id: uid(), tipus: "ingres", imp: t, estalvi: e, rep: repartir(r2(t - e)), nota: "Saldo inicial", data: avui(), ts: Date.now() });
+    save(); vista = "inici"; render(); avisa("Fet! Ja pots començar a apuntar.");
+  });
+}
+function previewRep(gastar, estalvi) {
+  const rep = repartir(r2(gastar));
+  return `<div><span>${ESTALVI.em} Estalvi</span><strong class="num">${eur(estalvi)}</strong></div>` +
+    S.cats.map(c => `<div><span>${c.em} ${esc(c.nom)} · ${c.pct}%</span><span class="num">${eur(rep[c.id])}</span></div>`).join("");
+}
+
+function vInici() {
+  const s = saldos(), mk = mesActual(0), { g } = gastatMes(mk);
+  const gastar = r2(S.cats.reduce((a, c) => a + (s[c.id] || 0), 0));
+  const total = r2(gastar + s.estalvi);
+  const cats = S.cats.map(c => {
+    const v = s[c.id] || 0, gm = g[c.id] || 0, base = Math.max(v, 0) + gm;
+    const pct = base > 0 ? Math.max(0, Math.min(100, v / base * 100)) : 0;
+    const cls = v < 0 ? "neg" : (base > 0 && pct < 20 ? "low" : "");
+    const sub = v < 0 ? `T'has passat ${eur(-v)}` : `Gastat aquest mes: ${eur(gm)}`;
+    return `<li class="card cat ${cls}">
+      <span class="em" aria-hidden="true">${c.em}</span><span class="nm">${esc(c.nom)}</span>
+      <span class="v num">${eur(v)}</span><span class="sub">${sub}</span>
+      <span class="bar" aria-hidden="true"><i style="width:${pct}%"></i></span></li>`;
+  }).join("");
+  const banc = S.banc != null ? quadra(total) : "";
+  return `<h1 class="sr">Inici</h1>
+    <section class="card total" aria-label="Resum dels diners">
+      <div class="lbl">Tens en total</div>
+      <div class="big num">${eur(total)}</div>
+      <div class="split">
+        <div class="card"><div class="muted">Per a gastar</div><div class="v num">${eur(gastar)}</div></div>
+        <div class="card save"><div class="muted">${ESTALVI.em} Estalvi</div><div class="v num">${eur(s.estalvi)}</div></div>
+      </div>
+    </section>
+    <h2>Per categoria</h2>
+    <ul class="stack" style="list-style:none;padding:0;margin:0">${cats}</ul>
+    <h2>Quadra amb el banc?</h2>
+    <form class="card stack" id="fBanc" novalidate>
+      <div><label class="f" for="banc">Què posa la teua app del banc?</label>
+      <input class="in num" id="banc" inputmode="decimal" autocomplete="off" placeholder="0,00 €" value="${S.banc != null ? String(S.banc).replace(".", ",") : ""}"></div>
+      <div id="bancRes" aria-live="polite">${banc}</div>
+      <button class="btn block" type="submit">Comprovar</button>
+    </form>`;
+}
+function quadra(total) {
+  const d = r2(S.banc - total);
+  if (Math.abs(d) < 0.005) return `<p style="color:var(--ok);font-weight:700;margin:0">✓ Quadra perfecte.</p>`;
+  return `<p style="color:var(--warn);font-weight:700;margin:0">${d > 0 ? "Al banc tens " + eur(d) + " més" : "Al banc tens " + eur(-d) + " menys"} del que diu ací.</p>
+    <p class="hint">${d > 0 ? "Potser falta apuntar un ingrés." : "Potser falta apuntar alguna despesa."}</p>`;
+}
+function lligaInici() {
+  document.getElementById("fBanc").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const v = document.getElementById("banc").value.trim();
+    S.banc = v ? parseEur(v) : null;
+    if (v && !(S.banc >= 0)) { S.banc = null; document.getElementById("bancRes").innerHTML = `<p class="err">Escriu una quantitat vàlida.</p>`; return; }
+    save(); render();
+  });
+}
+
+function vMoviments() {
+  const mk = mesActual(mesOff);
+  const movs = S.movs.filter(m => mesDe(m.data) === mk).sort((a, b) => (b.data.localeCompare(a.data)) || (b.ts - a.ts));
+  let html = "", dia = "";
+  for (const m of movs) {
+    if (m.data !== dia) { if (dia) html += `</div>`; dia = m.data; html += `<h3 class="day">${nomDia(dia)}</h3><div>`; }
+    html += filaMov(m);
+  }
+  if (dia) html += `</div>`;
+  return `<h1 class="sr">Moviments</h1>${capMes(mk)}
+    ${html || `<p class="empty">No hi ha moviments este mes.</p>`}`;
+}
+function filaMov(m) {
+  let em, t, s, a, cls;
+  if (m.tipus === "despesa") { const c = compte(m.cat); em = c.em; t = m.nota || c.nom; s = c.nom; a = "−" + eur(m.imp); cls = "out"; }
+  else if (m.tipus === "ingres") { em = "💶"; t = m.nota || "Ingrés"; s = m.estalvi ? `Ingrés · ${eur(m.estalvi)} a l'estalvi` : "Ingrés"; a = "+" + eur(m.imp); cls = "in"; }
+  else { const de = compte(m.de), ac = compte(m.a); em = "🔁"; t = m.nota || "Moure diners"; s = `${de.nom} → ${ac.nom}`; a = eur(m.imp); cls = "mv2"; }
+  return `<button type="button" class="mv" data-id="${m.id}" aria-label="${esc(t)}, ${esc(s)}, ${esc(a)}. Editar">
+    <span class="em" aria-hidden="true">${em}</span><span class="t">${esc(t)}</span>
+    <span class="a ${cls} num">${a}</span><span class="s">${esc(s)}</span></button>`;
+}
+function capMes(mk) {
+  return `<div class="mhead">
+    <button type="button" class="btn" id="mPrev" aria-label="Mes anterior">‹</button>
+    <h2 aria-live="polite">${nomMes(mk)}</h2>
+    <button type="button" class="btn" id="mNext" aria-label="Mes següent" ${mesOff >= 0 ? "disabled" : ""}>›</button></div>`;
+}
+function lligaMes() {
+  document.getElementById("mPrev").onclick = () => { mesOff--; render(); document.getElementById("mPrev").focus(); };
+  document.getElementById("mNext").onclick = () => { if (mesOff < 0) { mesOff++; render(); document.getElementById(mesOff < 0 ? "mNext" : "mPrev").focus(); } };
+}
+function lligaMoviments() {
+  lligaMes();
+  document.querySelectorAll(".mv").forEach(b => b.onclick = () => obrirForm(S.movs.find(m => m.id === b.dataset.id)));
+}
+
+function vResum() {
+  const mk = mesActual(mesOff), { g, tot } = gastatMes(mk);
+  let ing = 0, est = 0;
+  for (const m of S.movs) {
+    if (mesDe(m.data) !== mk) continue;
+    if (m.tipus === "ingres") { ing = r2(ing + m.imp); est = r2(est + (m.estalvi || 0)); }
+    if (m.tipus === "traspas") { if (m.a === "estalvi") est = r2(est + m.imp); if (m.de === "estalvi") est = r2(est - m.imp); }
+  }
+  const max = Math.max(0, ...Object.values(g));
+  const barres = S.cats.map(c => {
+    const v = g[c.id] || 0;
+    return `<div class="hb"><span>${c.em} ${esc(c.nom)}</span><strong class="num">${eur(v)}${tot ? ` · ${Math.round(v / tot * 100)}%` : ""}</strong>
+      <span class="bar" aria-hidden="true"><i style="width:${max ? v / max * 100 : 0}%"></i></span></div>`;
+  }).join("");
+  const top = S.movs.filter(m => m.tipus === "despesa" && mesDe(m.data) === mk).sort((a, b) => b.imp - a.imp).slice(0, 3);
+  return `<h1 class="sr">Resum</h1>${capMes(mk)}
+    <div class="kpis" style="margin-top:14px">
+      <div class="card"><div class="muted">Gastat</div><div class="v num">${eur(tot)}</div></div>
+      <div class="card"><div class="muted">Ha entrat</div><div class="v num">${eur(ing)}</div></div>
+      <div class="card"><div class="muted">${ESTALVI.em} A l'estalvi</div><div class="v num">${eur(est)}</div></div>
+      <div class="card"><div class="muted">Despeses</div><div class="v num">${S.movs.filter(m => m.tipus === "despesa" && mesDe(m.data) === mk).length}</div></div>
+    </div>
+    <h2>En què has gastat</h2>
+    <div class="card">${tot ? barres : `<p class="empty" style="padding:8px">Encara no hi ha despeses este mes.</p>`}</div>
+    ${top.length ? `<h2>El més gran</h2><div>${top.map(filaMov).join("")}</div>` : ""}`;
+}
+function lligaResum() {
+  lligaMes();
+  document.querySelectorAll(".mv").forEach(b => b.onclick = () => obrirForm(S.movs.find(m => m.id === b.dataset.id)));
+}
+
+function vAjustos() {
+  const rows = S.cats.map((c, i) => `<div class="pctrow">
+      <span class="em" aria-hidden="true">${c.em}</span>
+      <input class="in" data-nom="${i}" value="${esc(c.nom)}" aria-label="Nom de la categoria ${i + 1}" maxlength="24">
+      <span class="pctin"><input class="in num" data-pct="${i}" inputmode="numeric" value="${c.pct}" aria-label="Percentatge de ${esc(c.nom)}"><span aria-hidden="true">%</span></span>
+    </div>`).join("");
+  return `<h1>Ajustos</h1>
+    <section class="card">
+      <h2 style="margin-top:0">Com es reparteixen els ingressos</h2>
+      <p class="hint" style="margin-top:0">Quan entren diners, la part que no va a l'estalvi es reparteix amb estos percentatges. Han de sumar 100%. Canviar-los no toca el que ja estava repartit.</p>
+      <form id="fPct" novalidate>${rows}
+        <div class="sum" id="pctSum" aria-live="polite"></div>
+        <button class="btn pri block" type="submit" id="pctSave" style="margin-top:12px">Guardar</button>
+      </form>
+    </section>
+    <section class="card" style="margin-top:14px">
+      <form id="fEst" novalidate>
+        <label class="f" for="estPct">Estalvi proposat en cada ingrés</label>
+        <span class="pctin"><input class="in num" id="estPct" inputmode="numeric" value="${S.estalviPct}" style="max-width:7rem"><span aria-hidden="true">%</span></span>
+        <div class="hint">Quan apuntes un ingrés, es proposa apartar este % a l'estalvi. Sempre ho pots canviar.</div>
+        <button class="btn block" type="submit" style="margin-top:12px">Guardar</button>
+      </form>
+    </section>
+    <h2>Còpia de seguretat</h2>
+    <div class="card stack">
+      <p class="hint" style="margin:0">Les dades només viuen en este mòbil. Fes-ne una còpia de tant en tant i guarda-la a Fitxers o envia-te-la.</p>
+      <button class="btn block" type="button" id="exp">⬇️ Fer una còpia</button>
+      <label class="btn block" for="imp">⬆️ Recuperar una còpia</label>
+      <input type="file" id="imp" accept="application/json,.json" class="sr">
+    </div>
+    <h2>Zona perillosa</h2>
+    <div class="card"><button class="btn danger block" type="button" id="del">Esborrar-ho tot i començar de nou</button></div>`;
+}
+function lligaAjustos() {
+  const f = document.getElementById("fPct"), sum = document.getElementById("pctSum"), btn = document.getElementById("pctSave");
+  const llig = () => [...f.querySelectorAll("[data-pct]")].map(i => Number(i.value.replace(",", ".")));
+  const pinta = () => {
+    const v = llig(), t = v.reduce((a, b) => a + (isFinite(b) ? b : NaN), 0), ok = v.every(x => isFinite(x) && x >= 0) && Math.abs(t - 100) < 0.001;
+    sum.className = "sum" + (ok ? "" : " bad");
+    sum.innerHTML = `<span>Total</span><span>${isFinite(t) ? t : "—"}%${ok ? " ✓" : " (ha de ser 100)"}</span>`;
+    btn.disabled = !ok;
+  };
+  f.addEventListener("input", pinta); pinta();
+  f.addEventListener("submit", ev => {
+    ev.preventDefault(); if (btn.disabled) return;
+    const v = llig();
+    f.querySelectorAll("[data-nom]").forEach(i => { const n = i.value.trim(); if (n) S.cats[+i.dataset.nom].nom = n; });
+    v.forEach((p, i) => S.cats[i].pct = p);
+    save(); render(); avisa("Guardat.");
+  });
+  document.getElementById("fEst").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const p = Number(document.getElementById("estPct").value.replace(",", "."));
+    if (!(p >= 0 && p <= 100)) { avisa("Ha de ser entre 0 i 100."); return; }
+    S.estalviPct = p; save(); avisa("Guardat.");
+  });
+  document.getElementById("exp").onclick = () => {
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `finances-${avui()}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  document.getElementById("imp").onchange = async ev => {
+    const file = ev.target.files[0]; if (!file) return;
+    try {
+      const s = JSON.parse(await file.text());
+      if (!s || !Array.isArray(s.movs) || !Array.isArray(s.cats)) throw new Error();
+      if (!confirm(`Recuperar esta còpia? Substituirà el que hi ha ara (${S.movs.length} moviments) per ${s.movs.length} moviments.`)) return;
+      S = Object.assign(nouEstat(), s); save(); vista = "inici"; render(); avisa("Còpia recuperada.");
+    } catch (e) { avisa("Este fitxer no és una còpia vàlida."); }
+    ev.target.value = "";
+  };
+  document.getElementById("del").onclick = () => {
+    if (!confirm("Segur? S'esborraran tots els moviments.")) return;
+    if (!confirm("De veritat? Això no es pot desfer. Si no tens còpia, es perd tot.")) return;
+    S = nouEstat(); save(); vista = "inici"; render();
+  };
+}
+
+/* ---------- formulari (afegir / editar) ---------- */
+const sheet = document.getElementById("sheet");
+function obrirForm(mov) {
+  let tipus = mov ? mov.tipus : "despesa";
+  const body = document.getElementById("sheetBody");
+  const opts = sel => [ESTALVI, ...S.cats].map(c => `<option value="${c.id}" ${c.id === sel ? "selected" : ""}>${c.em} ${esc(c.nom)}</option>`).join("");
+  const pinta = () => {
+    const m = mov && mov.tipus === tipus ? mov : null;
+    const imp = m ? String(m.imp).replace(".", ",") : "";
+    const titol = mov ? "Editar moviment" : "Afegir";
+    let camps = "";
+    if (tipus === "despesa") {
+      const sel = m ? m.cat : S.cats[0].id;
+      camps = `<fieldset><legend>Categoria</legend><div class="chips">${S.cats.map(c => `<input type="radio" name="cat" id="c_${c.id}" value="${c.id}" ${c.id === sel ? "checked" : ""}><label for="c_${c.id}"><span aria-hidden="true">${c.em}</span>${esc(c.nom)}</label>`).join("")}</div></fieldset>`;
+    } else if (tipus === "ingres") {
+      const est = m ? String(m.estalvi || 0).replace(".", ",") : "";
+      camps = `<div><label class="f" for="fEstalvi">D'això, a l'estalvi</label>
+        <input class="in num" id="fEstalvi" inputmode="decimal" autocomplete="off" value="${est}" placeholder="0,00 €" aria-describedby="fEstHint">
+        <div class="hint" id="fEstHint">Es proposa el ${S.estalviPct}%. La resta es reparteix entre les categories.</div></div>
+        <div class="prev" id="fPrev" aria-live="polite"></div>`;
+    } else {
+      camps = `<div><label class="f" for="fDe">Des de</label><select class="in" id="fDe">${opts(m ? m.de : "estalvi")}</select></div>
+        <div><label class="f" for="fA">Cap a</label><select class="in" id="fA">${opts(m ? m.a : S.cats[0].id)}</select></div>`;
+    }
+    body.innerHTML = `<div class="sheet-h"><h2 id="sheetTitle">${titol}</h2><button type="button" class="x" id="sx" aria-label="Tancar">×</button></div>
+      ${mov ? "" : `<div class="seg" role="group" aria-label="Tipus de moviment">
+        <button type="button" data-t="despesa" aria-pressed="${tipus === "despesa"}">Despesa</button>
+        <button type="button" data-t="ingres" aria-pressed="${tipus === "ingres"}">Ingrés</button>
+        <button type="button" data-t="traspas" aria-pressed="${tipus === "traspas"}">Moure</button></div>`}
+      <form id="fMov" class="stack" novalidate style="margin-top:14px">
+        <div><label class="f" for="fImp">${tipus === "despesa" ? "Quant has gastat?" : tipus === "ingres" ? "Quant ha entrat?" : "Quant vols moure?"}</label>
+          <input class="in amt num" id="fImp" inputmode="decimal" autocomplete="off" placeholder="0,00 €" value="${imp}" aria-describedby="fImpErr">
+          <div class="err" id="fImpErr" role="alert"></div></div>
+        ${camps}
+        <div><label class="f" for="fNota">Nota <span class="muted">(opcional)</span></label>
+          <input class="in" id="fNota" maxlength="60" autocomplete="off" value="${esc(m ? m.nota : "")}" placeholder="${tipus === "despesa" ? "Ex.: sopar amb amigues" : tipus === "ingres" ? "Ex.: sou, regal…" : ""}"></div>
+        <div><label class="f" for="fData">Data</label><input class="in" type="date" id="fData" value="${m ? m.data : avui()}" max="${avui()}"></div>
+        <button class="btn pri block" type="submit">${mov ? "Guardar canvis" : "Afegir"}</button>
+        ${mov ? `<button class="btn danger block" type="button" id="fDel">Esborrar este moviment</button>` : ""}
+      </form>`;
+    body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { const v = body.querySelector("#fImp").value; tipus = b.dataset.t; pinta(); body.querySelector("#fImp").value = v; actPrev(); body.querySelector(`[data-t="${tipus}"]`).focus(); });
+    body.querySelector("#sx").onclick = () => sheet.close();
+    const fImp = body.querySelector("#fImp"), fEst = body.querySelector("#fEstalvi");
+    let estTocat = !!(m && tipus === "ingres");
+    const actPrev = () => {
+      const p = body.querySelector("#fPrev"); if (!p) return;
+      const t = parseEur(fImp.value);
+      if (fEst && !estTocat) fEst.value = t > 0 ? String(r2(t * S.estalviPct / 100)).replace(".", ",") : "";
+      const e = fEst && fEst.value.trim() ? parseEur(fEst.value) : 0;
+      p.innerHTML = t > 0 && e >= 0 && e <= t ? previewRep(t - e, e) : `<span class="muted">Ací veuràs com es reparteix.</span>`;
+    };
+    fImp.addEventListener("input", actPrev);
+    if (fEst) fEst.addEventListener("input", () => { estTocat = true; actPrev(); });
+    actPrev();
+    body.querySelector("#fMov").onsubmit = ev => { ev.preventDefault(); desa(mov, tipus); };
+    const del = body.querySelector("#fDel");
+    if (del) del.onclick = () => { if (confirm("Esborrar este moviment?")) { S.movs = S.movs.filter(x => x.id !== mov.id); save(); sheet.close(); render(); avisa("Esborrat."); } };
+  };
+  pinta();
+  sheet.showModal();
+  setTimeout(() => document.getElementById("fImp").focus(), 50);
+}
+function desa(mov, tipus) {
+  const $ = id => document.getElementById(id);
+  const imp = parseEur($("fImp").value), err = $("fImpErr");
+  if (!(imp > 0) || imp > 1000000) { err.textContent = "Escriu una quantitat, per exemple 12 o 12,50."; $("fImp").focus(); return; }
+  const data = $("fData").value || avui();
+  const nota = $("fNota").value.trim();
+  const m = { id: mov ? mov.id : uid(), tipus, imp, nota, data, ts: mov ? mov.ts : Date.now() };
+  if (tipus === "despesa") {
+    m.cat = (document.querySelector('input[name="cat"]:checked') || {}).value || S.cats[0].id;
+  } else if (tipus === "ingres") {
+    const e = $("fEstalvi").value.trim() ? parseEur($("fEstalvi").value) : 0;
+    if (!(e >= 0) || e > imp) { err.textContent = "L'estalvi ha de ser entre 0 i el que ha entrat."; $("fEstalvi").focus(); return; }
+    m.estalvi = e; m.rep = repartir(r2(imp - e));
+  } else {
+    m.de = $("fDe").value; m.a = $("fA").value;
+    if (m.de === m.a) { err.textContent = "Tria dos llocs diferents."; $("fA").focus(); return; }
+  }
+  if (mov) S.movs = S.movs.map(x => x.id === mov.id ? m : x); else S.movs.push(m);
+  save(); sheet.close(); render();
+  avisa(mov ? "Canvis guardats." : tipus === "despesa" ? `Apuntat: ${eur(imp)} a ${compte(m.cat).nom}.` : tipus === "ingres" ? `Ingrés de ${eur(imp)} repartit.` : "Diners moguts.");
+}
+
+/* ---------- arrancada ---------- */
+document.getElementById("tabs").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-v]"); if (!b) return;
+  if (b.dataset.v !== vista) { vista = b.dataset.v; mesOff = 0; render(); window.scrollTo(0, 0); }
+});
+document.getElementById("addBtn").onclick = () => obrirForm(null);
+sheet.addEventListener("click", ev => { if (ev.target === sheet) sheet.close(); });
+sheet.addEventListener("close", () => { const a = document.getElementById("addBtn"); if (a && !document.getElementById("tabs").hidden) a.focus(); });
+window.addEventListener("storage", e => { if (e.key === KEY) { S = load(); render(); } });
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+render();
+</script>
+</body>
+</html>
