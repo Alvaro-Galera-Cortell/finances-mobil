@@ -3,36 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16181d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#1a0e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Finances">
 <meta name="description" content="Els meus diners: estalvi i despesa per categories.">
 <title>Finances</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#f6f4ef; --card:#ffffff; --soft:#efece5; --line:rgba(30,25,20,.12);
-  --text:#1d1b18; --muted:#5e5850; --accent:#2f5bd3; --accent-text:#fff;
-  --ok:#17794a; --bad:#b42318; --warn:#9a5b00; --save:#6a3fc4;
-  --r:18px; --gap:14px;
+  /* Paleta i tipografies de lluna-web (css/style.css) */
+  --rosa:#ff6b9d; --rosa-suau:#ffb3c6; --fosc:#1a0e1a; --fosc-2:#2a1626; --crema:#fff4f7; --daurat:#f5c97b;
+  --bg:var(--fosc); --card:rgba(255,255,255,.06); --soft:rgba(255,255,255,.08); --line:rgba(255,179,198,.25);
+  --text:var(--crema); --muted:rgba(255,244,247,.78); --accent:var(--rosa); --accent-text:var(--fosc);
+  --ok:#8fe3b4; --bad:#ff8fa3; --warn:var(--daurat); --save:var(--daurat);
+  --r:20px; --gap:14px;
+  --serif:'Cormorant Garamond',Georgia,serif; --script:'Dancing Script',cursive;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#16181d; --card:#20232a; --soft:#2a2e36; --line:rgba(255,255,255,.12);
-    --text:#f2f1ee; --muted:#b4b0a8; --accent:#7c9cff; --accent-text:#0d1020;
-    --ok:#5fd396; --bad:#ff8a80; --warn:#f2b45a; --save:#b89bff;
-  }
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;font-size:106.25%}
-body{margin:0;background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4;
+body{margin:0;background:linear-gradient(160deg,var(--fosc) 0%,var(--fosc-2) 100%) fixed;color:var(--text);min-height:100vh;
+  font-family:var(--serif);font-weight:500;font-size:1.12rem;line-height:1.45;
   padding-top:var(--safe-t);padding-bottom:calc(84px + var(--safe-b))}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -151,10 +150,66 @@ dialog .wrap{padding-bottom:calc(20px + var(--safe-b))}
 .sheet-h h2{margin:0;font-size:1.2rem}
 .x{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:1.4rem}
 
+/* Lluna */
+.lluna-card{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;text-align:left;margin-bottom:14px;
+  background:linear-gradient(135deg,#2b2350,#5b3f8f);color:#fff;border:0}
+.lluna-card .em{font-size:1.8rem}
+.lluna-card strong{display:block;font-size:1.05rem}
+.lluna-card span.s{font-size:.88rem;opacity:.85}
+.lluna-card .go{margin-left:auto;font-size:1.4rem}
+#lluna{margin:0;width:100%;max-width:none;height:100%;max-height:none;border-radius:0;background:#000}
+#lluna .lbar{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;gap:8px;justify-content:space-between;
+  padding:calc(8px + var(--safe-t)) 10px 8px;background:rgba(0,0,0,.55)}
+#lluna .lbar a,#lluna .lbar button{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.12);color:#fff;font-weight:600;display:inline-flex;align-items:center;text-decoration:none}
+#lluna iframe{position:absolute;inset:0;width:100%;height:100%;border:0;padding-top:calc(60px + var(--safe-t));background:#000}
 /* Welcome */
 .welcome h1{font-size:1.7rem;margin-top:18px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--safe-b));z-index:20;
   background:var(--text);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;max-width:90vw}
+/* ---- Format lluna-web ---- */
+html{background:var(--fosc-2)}
+body{font-variant-numeric:lining-nums}
+.in::placeholder{color:rgba(255,244,247,.55)}
+#hearts{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1}
+.card{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+h1,h2,.welcome h1{font-family:var(--script);color:var(--rosa-suau);text-shadow:0 0 20px rgba(255,107,157,.35);font-weight:700}
+h1{font-size:2.1rem} h2{font-size:1.65rem}
+.mhead h2{text-transform:none}
+.total .lbl{font-family:var(--script);font-size:1.5rem;color:var(--rosa-suau)}
+.total .big,.split .v,.kpis .v,.cat .v{color:var(--daurat)}
+.num{font-variant-numeric:lining-nums tabular-nums}
+.total .big{font-weight:600}
+.btn{border-radius:50px;font-family:var(--serif);font-size:1.1rem;letter-spacing:.5px}
+.btn.pri{background:linear-gradient(135deg,var(--rosa-suau),var(--rosa));box-shadow:0 8px 26px rgba(255,107,157,.35)}
+.btn.danger{color:var(--bad)}
+.in{background:rgba(255,255,255,.06);border-color:var(--line);border-radius:16px;font-family:var(--serif);font-weight:600}
+.in:focus{border-color:var(--rosa);outline:none}
+.in:focus-visible{outline:3px solid var(--rosa);outline-offset:2px}
+select.in option{background:var(--fosc-2);color:var(--crema)}
+.chips input:checked+label{background:rgba(255,107,157,.18);border-color:var(--rosa)}
+.seg{background:rgba(255,255,255,.06)}
+.seg button[aria-pressed="true"]{background:rgba(255,107,157,.18);color:var(--rosa-suau);outline-color:var(--rosa)}
+.bar>i{background:linear-gradient(90deg,var(--rosa),var(--rosa-suau))}
+.cat.low .bar>i{background:var(--daurat)}
+.hb .bar>i{background:linear-gradient(90deg,var(--rosa),var(--rosa-suau))}
+.prev{background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.mv{backdrop-filter:blur(6px)}
+.mv .a.out{color:var(--crema)}
+nav.tabs{background:rgba(26,14,26,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top-color:var(--line)}
+nav.tabs button{font-family:var(--serif);font-size:.9rem}
+nav.tabs button[aria-current="page"]{color:var(--rosa-suau)}
+nav.tabs .add{background:linear-gradient(135deg,var(--rosa-suau),var(--rosa));box-shadow:0 8px 30px rgba(255,107,157,.45)}
+dialog{background:linear-gradient(160deg,var(--fosc) 0%,var(--fosc-2) 100%)}
+.x{background:rgba(255,255,255,.06);color:var(--crema)}
+.toast{background:var(--crema);color:var(--fosc)}
+.moon{font-size:4rem;text-align:center;filter:drop-shadow(0 0 25px rgba(245,201,123,.6))}
+.welcome{text-align:center}.welcome form{text-align:left}
+.lluna-card{background:linear-gradient(135deg,rgba(255,107,157,.28),rgba(245,201,123,.18));border:1px solid var(--line)}
+.lluna-card strong{font-family:var(--script);font-size:1.5rem;color:var(--rosa-suau)}
+@media (prefers-reduced-motion: no-preference){.moon{animation:float 4s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}}
 footer{text-align:center;font-size:.8rem;color:var(--muted);margin-top:24px}
 @media (prefers-reduced-motion: no-preference){
   dialog[open]{animation:up .22s ease-out}
@@ -163,6 +218,7 @@ footer{text-align:center;font-size:.8rem;color:var(--muted);margin-top:24px}
 </style>
 </head>
 <body>
+<canvas id="hearts" aria-hidden="true"></canvas>
 <div id="app"></div>
 <div id="live" class="sr" aria-live="polite"></div>
 
@@ -174,11 +230,16 @@ footer{text-align:center;font-size:.8rem;color:var(--muted);margin-top:24px}
   <button type="button" data-v="ajustos"><span class="ic" aria-hidden="true">⚙️</span>Ajustos</button>
 </nav>
 
+<dialog id="lluna" aria-label="365 dies amb tu">
+  <div class="lbar"><button type="button" id="llunaX">‹ Tornar</button><a href="" id="llunaOut" target="_blank" rel="noopener">Obrir a Safari ↗</a></div>
+  <iframe id="llunaFrame" title="365 dies amb tu" allow="autoplay; encrypted-media; fullscreen" loading="lazy"></iframe>
+</dialog>
 <dialog id="sheet" aria-labelledby="sheetTitle"><div class="wrap" id="sheetBody"></div></dialog>
 
 <script>
 "use strict";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.2.0";
+const LLUNA_URL = "https://lluna-web-pearl.vercel.app/";
 const KEY = "finances_v1";
 const CATS_DEF = [
   { id: "capritxos", nom: "Capritxos", em: "🛍️", pct: 30 },
@@ -280,7 +341,8 @@ function render() {
 
 function vBenvinguda() {
   return `<main class="wrap welcome" id="main">
-    <h1>Hola! 👋</h1>
+    <div class="moon" aria-hidden="true">🌙</div>
+    <h1>Hola! 💕</h1>
     <p>Comencem. Digues quants diners tens ara mateix i quant en vols apartar a l'estalvi. La resta es repartirà entre les teues categories.</p>
     <form id="fIni" class="stack card" novalidate>
       <div><label class="f" for="iniTot">Quants diners tens ara?</label>
@@ -335,6 +397,8 @@ function vInici() {
   }).join("");
   const banc = S.banc != null ? quadra(total) : "";
   return `<h1 class="sr">Inici</h1>
+    <button type="button" class="card lluna-card" id="llunaBtn"><span class="em" aria-hidden="true">🌙</span>
+      <span><strong>365 dies amb tu</strong><span class="s">La nostra web</span></span><span class="go" aria-hidden="true">›</span></button>
     <section class="card total" aria-label="Resum dels diners">
       <div class="lbl">Tens en total</div>
       <div class="big num">${eur(total)}</div>
@@ -360,6 +424,7 @@ function quadra(total) {
     <p class="hint">${d > 0 ? "Potser falta apuntar un ingrés." : "Potser falta apuntar alguna despesa."}</p>`;
 }
 function lligaInici() {
+  document.getElementById("llunaBtn").onclick = obrirLluna;
   document.getElementById("fBanc").addEventListener("submit", ev => {
     ev.preventDefault();
     const v = document.getElementById("banc").value.trim();
@@ -597,6 +662,41 @@ function desa(mov, tipus) {
   save(); sheet.close(); render();
   avisa(mov ? "Canvis guardats." : tipus === "despesa" ? `Apuntat: ${eur(imp)} a ${compte(m.cat).nom}.` : tipus === "ingres" ? `Ingrés de ${eur(imp)} repartit.` : "Diners moguts.");
 }
+
+/* ---------- Lluna ---------- */
+// L'iframe només carrega en obrir i es buida en tancar: així la música i el vídeo paren.
+const lluna = document.getElementById("lluna");
+function obrirLluna() {
+  document.getElementById("llunaFrame").src = LLUNA_URL;
+  document.getElementById("llunaOut").href = LLUNA_URL;
+  lluna.showModal(); document.getElementById("llunaX").focus();
+}
+document.getElementById("llunaX").onclick = () => lluna.close();
+lluna.addEventListener("close", () => { document.getElementById("llunaFrame").src = "about:blank"; const b = document.getElementById("llunaBtn"); if (b) b.focus(); });
+
+/* ---------- pluja de cors (la de lluna-web) ---------- */
+(function () {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = document.getElementById("hearts"), cx = cv.getContext("2d");
+  const mida = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  mida(); addEventListener("resize", mida);
+  const nou = () => ({ x: Math.random() * cv.width, y: -20, m: 8 + Math.random() * 14, v: .3 + Math.random() * .8, o: Math.random() * 6.28, a: .12 + Math.random() * .25 });
+  const cors = Array.from({ length: 18 }, () => { const c = nou(); c.y = Math.random() * cv.height; return c; });
+  function cor(x, y, m, a) {
+    const t = m / 16; cx.globalAlpha = a; cx.fillStyle = "#ff6b9d"; cx.beginPath();
+    cx.moveTo(x, y + 4 * t);
+    cx.bezierCurveTo(x, y, x - 8 * t, y - 2 * t, x - 8 * t, y + 4 * t);
+    cx.bezierCurveTo(x - 8 * t, y + 9 * t, x, y + 12 * t, x, y + 16 * t);
+    cx.bezierCurveTo(x, y + 12 * t, x + 8 * t, y + 9 * t, x + 8 * t, y + 4 * t);
+    cx.bezierCurveTo(x + 8 * t, y - 2 * t, x, y, x, y + 4 * t);
+    cx.fill();
+  }
+  (function pas() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    for (const c of cors) { c.y += c.v; c.o += .02; if (c.y > cv.height + 20) Object.assign(c, nou()); cor(c.x + Math.sin(c.o) * 12, c.y, c.m, c.a); }
+    if (!document.hidden) requestAnimationFrame(pas); else document.addEventListener("visibilitychange", () => requestAnimationFrame(pas), { once: true });
+  })();
+})();
 
 /* ---------- arrancada ---------- */
 document.getElementById("tabs").addEventListener("click", ev => {
