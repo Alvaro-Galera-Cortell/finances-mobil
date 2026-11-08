@@ -14,7 +14,7 @@ Publicada a GitHub Pages; s'instal·la des de Safari amb «Afegir a la pantalla 
   **reparteix per percentatges** entre categories. El repartiment queda guardat al moviment (`rep`):
   canviar els percentatges després no reescriu el passat.
 - Saldo d'una categoria = repartit + traspassos d'entrada − eixides − despeses. Total = estalvi + categories.
-- Categories de partida: Capritxos 30 · Sopar fora 30 · Oci 20 · Emergència 15 · Fixos 5.
+- Categories de partida: Capritxos 30 · Sopar fora 30 · Oci 20 · Emergència 20 (%) i Fixos 3,50 € fixos per ingrés (`fix`). Les quantitats fixes ixen primer; la resta, per %.
 - Dades només en `localStorage["finances_v1"]` del mòbil. Còpia: Ajustos → Fer una còpia (JSON).
 
 ## Actualitzar

@@ -238,15 +238,15 @@ footer{text-align:center;font-size:.8rem;color:var(--muted);margin-top:24px}
 
 <script>
 "use strict";
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.3.0";
 const LLUNA_URL = "https://lluna-web-pearl.vercel.app/";
 const KEY = "finances_v1";
 const CATS_DEF = [
   { id: "capritxos", nom: "Capritxos", em: "🛍️", pct: 30 },
   { id: "soparfora", nom: "Sopar fora", em: "🍽️", pct: 30 },
   { id: "oci", nom: "Oci", em: "🎉", pct: 20 },
-  { id: "emergencia", nom: "Emergència", em: "🚨", pct: 15 },
-  { id: "fixos", nom: "Fixos", em: "📌", pct: 5 },
+  { id: "emergencia", nom: "Emergència", em: "🚨", pct: 20 },
+  { id: "fixos", nom: "Fixos", em: "📌", pct: 0, fix: 3.5 },
 ];
 const ESTALVI = { id: "estalvi", nom: "Estalvi", em: "🐷" };
 
@@ -257,12 +257,19 @@ let mesOff = 0;
 function nouEstat() {
   return { v: 1, cats: CATS_DEF.map(c => ({ ...c })), movs: [], estalviPct: 20, banc: null };
 }
+// 1.3.0: Fixos passa a ser una quantitat fixa (3,50 €) i el seu 5% va a Emergència.
+// Només si encara té el repartiment de fàbrica: el que ella haja canviat no es toca.
+function migra(s) {
+  const f = s.cats.find(c => c.id === "fixos"), e = s.cats.find(c => c.id === "emergencia");
+  if (f && f.fix == null && Number(f.pct) === 5 && e && Number(e.pct) === 15) { f.pct = 0; f.fix = 3.5; e.pct = 20; }
+  return s;
+}
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const s = JSON.parse(raw);
-      if (s && Array.isArray(s.movs) && Array.isArray(s.cats)) return Object.assign(nouEstat(), s);
+      if (s && Array.isArray(s.movs) && Array.isArray(s.cats)) return migra(Object.assign(nouEstat(), s));
     }
   } catch (e) {}
   return nouEstat();
@@ -300,10 +307,14 @@ function avisa(t) {
 // L'ingrés es reparteix en el moment: el que va a cada categoria queda guardat al moviment,
 // així canviar els percentatges després no reescriu el passat.
 function repartir(total) {
-  const rep = {}; let usat = 0;
-  S.cats.forEach(c => { rep[c.id] = r2(total * c.pct / 100); usat = r2(usat + rep[c.id]); });
-  const resta = r2(total - usat);
-  if (resta && S.cats.length) { const gran = [...S.cats].sort((a, b) => b.pct - a.pct)[0]; rep[gran.id] = r2(rep[gran.id] + resta); }
+  // Primer les quantitats fixes (Fixos: 3,50 €); el que queda, per percentatges.
+  const rep = {}; let queda = r2(total);
+  S.cats.filter(c => c.fix != null).forEach(c => { rep[c.id] = r2(Math.min(Math.max(queda, 0), Number(c.fix) || 0)); queda = r2(queda - rep[c.id]); });
+  const perPct = S.cats.filter(c => c.fix == null);
+  let usat = 0;
+  perPct.forEach(c => { rep[c.id] = r2(queda * c.pct / 100); usat = r2(usat + rep[c.id]); });
+  const resta = r2(queda - usat);
+  if (resta && perPct.length) { const gran = [...perPct].sort((a, b) => b.pct - a.pct)[0]; rep[gran.id] = r2(rep[gran.id] + resta); }
   return rep;
 }
 function saldos() {
@@ -325,7 +336,7 @@ function gastatMes(mk) {
   for (const m of S.movs) if (m.tipus === "despesa" && mesDe(m.data) === mk) { g[m.cat] = r2((g[m.cat] || 0) + m.imp); tot = r2(tot + m.imp); }
   return { g, tot };
 }
-function sumaPct() { return S.cats.reduce((a, c) => a + Number(c.pct || 0), 0); }
+const etiq = c => c.fix != null ? eur(c.fix) + " fixos" : c.pct + "%";
 
 /* ---------- vistes ---------- */
 function render() {
@@ -378,7 +389,7 @@ function lligaBenvinguda() {
 function previewRep(gastar, estalvi) {
   const rep = repartir(r2(gastar));
   return `<div><span>${ESTALVI.em} Estalvi</span><strong class="num">${eur(estalvi)}</strong></div>` +
-    S.cats.map(c => `<div><span>${c.em} ${esc(c.nom)} · ${c.pct}%</span><span class="num">${eur(rep[c.id])}</span></div>`).join("");
+    S.cats.map(c => `<div><span>${c.em} ${esc(c.nom)} · ${etiq(c)}</span><span class="num">${eur(rep[c.id])}</span></div>`).join("");
 }
 
 function vInici() {
@@ -505,12 +516,14 @@ function vAjustos() {
   const rows = S.cats.map((c, i) => `<div class="pctrow">
       <span class="em" aria-hidden="true">${c.em}</span>
       <input class="in" data-nom="${i}" value="${esc(c.nom)}" aria-label="Nom de la categoria ${i + 1}" maxlength="24">
-      <span class="pctin"><input class="in num" data-pct="${i}" inputmode="numeric" value="${c.pct}" aria-label="Percentatge de ${esc(c.nom)}"><span aria-hidden="true">%</span></span>
+      ${c.fix != null
+        ? `<span class="pctin"><input class="in num" data-fix="${i}" inputmode="decimal" value="${Number(c.fix).toFixed(2).replace(".", ",")}" aria-label="Quantitat fixa de ${esc(c.nom)} en euros"><span aria-hidden="true">€</span></span>`
+        : `<span class="pctin"><input class="in num" data-pct="${i}" inputmode="numeric" value="${c.pct}" aria-label="Percentatge de ${esc(c.nom)}"><span aria-hidden="true">%</span></span>`}
     </div>`).join("");
   return `<h1>Ajustos</h1>
     <section class="card">
       <h2 style="margin-top:0">Com es reparteixen els ingressos</h2>
-      <p class="hint" style="margin-top:0">Quan entren diners, la part que no va a l'estalvi es reparteix amb estos percentatges. Han de sumar 100%. Canviar-los no toca el que ja estava repartit.</p>
+      <p class="hint" style="margin-top:0">Quan entren diners, de la part que no va a l'estalvi primer ix la quantitat fixa (€) i la resta es reparteix amb estos percentatges, que han de sumar 100%. Canviar-los no toca el que ja estava repartit.</p>
       <form id="fPct" novalidate>${rows}
         <div class="sum" id="pctSum" aria-live="polite"></div>
         <button class="btn pri block" type="submit" id="pctSave" style="margin-top:12px">Guardar</button>
@@ -536,9 +549,11 @@ function vAjustos() {
 }
 function lligaAjustos() {
   const f = document.getElementById("fPct"), sum = document.getElementById("pctSum"), btn = document.getElementById("pctSave");
-  const llig = () => [...f.querySelectorAll("[data-pct]")].map(i => Number(i.value.replace(",", ".")));
+  const llig = () => [...f.querySelectorAll("[data-pct]")].map(i => [+i.dataset.pct, Number(i.value.replace(",", "."))]);
+  const lligFix = () => [...f.querySelectorAll("[data-fix]")].map(i => [+i.dataset.fix, parseEur(i.value)]);
   const pinta = () => {
-    const v = llig(), t = v.reduce((a, b) => a + (isFinite(b) ? b : NaN), 0), ok = v.every(x => isFinite(x) && x >= 0) && Math.abs(t - 100) < 0.001;
+    const v = llig().map(x => x[1]), t = v.reduce((a, b) => a + (isFinite(b) ? b : NaN), 0),
+      ok = v.every(x => isFinite(x) && x >= 0) && Math.abs(t - 100) < 0.001 && lligFix().every(x => x[1] >= 0);
     sum.className = "sum" + (ok ? "" : " bad");
     sum.innerHTML = `<span>Total</span><span>${isFinite(t) ? t : "—"}%${ok ? " ✓" : " (ha de ser 100)"}</span>`;
     btn.disabled = !ok;
@@ -548,7 +563,8 @@ function lligaAjustos() {
     ev.preventDefault(); if (btn.disabled) return;
     const v = llig();
     f.querySelectorAll("[data-nom]").forEach(i => { const n = i.value.trim(); if (n) S.cats[+i.dataset.nom].nom = n; });
-    v.forEach((p, i) => S.cats[i].pct = p);
+    llig().forEach(([i, p]) => S.cats[i].pct = p);
+    lligFix().forEach(([i, e]) => S.cats[i].fix = e);
     save(); render(); avisa("Guardat.");
   });
   document.getElementById("fEst").addEventListener("submit", ev => {
